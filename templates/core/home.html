@@ -1,19 +1,20 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}DietoBot Home{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-12">
         <div class="jumbotron bg-light p-5 rounded">
-            <h1 class="display-4">Welcome!</h1>
+            <h1 class="display-4">Welcome to DietoBot</h1>
             <p class="lead">
                 You are logged in as <strong>{{ user.username }}</strong>.
             </p>
             <hr class="my-4">
             <p>
-                From here you can access all system features.
+                Start by chatting with DietoBot so it can complete your profile.
             </p>
+            <a class="btn btn-primary btn-lg" href="{% url 'dietobot-chat' %}">Open DietoBot chat</a>
         </div>
     </div>
 </div>
@@ -22,11 +23,11 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">Dashboard</h5>
+                <h5 class="card-title">Profile onboarding</h5>
             </div>
             <div class="card-body">
-                <p class="card-text">View statistics and main information.</p>
-                <a href="#" class="btn btn-primary">Go to Dashboard</a>
+                <p class="card-text">Answer natural questions instead of filling out a form.</p>
+                <a href="{% url 'dietobot-chat' %}" class="btn btn-primary">Continue</a>
             </div>
         </div>
     </div>
@@ -34,11 +35,10 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">Management</h5>
+                <h5 class="card-title">Saved profile</h5>
             </div>
             <div class="card-body">
-                <p class="card-text">Manage data and system configurations.</p>
-                <a href="#" class="btn btn-secondary">Manage</a>
+                <p class="card-text">Your answers are stored in your DietoBot profile.</p>
             </div>
         </div>
     </div>
@@ -46,11 +46,10 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">Reports</h5>
+                <h5 class="card-title">Next phases</h5>
             </div>
             <div class="card-body">
-                <p class="card-text">Generate and view detailed reports.</p>
-                <a href="#" class="btn btn-success">View Reports</a>
+                <p class="card-text">Meal plans, recipes, and nutrition targets come later.</p>
             </div>
         </div>
     </div>
