@@ -147,8 +147,3 @@ LOGOUT_REDIRECT_URL = 'login'
 
 # WhiteNoise settings
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Vertex AI / LangChain settings
-VERTEX_AI_PROJECT = env('VERTEX_AI_PROJECT', default='')
-VERTEX_AI_LOCATION = env('VERTEX_AI_LOCATION', default='us-central1')
-VERTEX_AI_MODEL = env('VERTEX_AI_MODEL', default='')

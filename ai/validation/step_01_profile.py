@@ -1,14 +1,11 @@
-"""Step 01: validate extracted profile data before saving it."""
+"""Validate the profile fields returned by Vertex."""
 
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from ai.extraction.step_01_profile import ProfileExtraction
 
-VALID_SEX = {"male", "female"}
-VALID_ACTIVITY_LEVELS = {"sedentary", "light", "moderate", "high"}
-VALID_GOALS = {"lose", "maintain", "gain"}
 
-REQUIRED_PROFILE_FIELDS = (
+REQUIRED_FIELDS = (
     "age",
     "sex",
     "height_cm",
@@ -18,103 +15,33 @@ REQUIRED_PROFILE_FIELDS = (
 )
 
 
-def validate_profile_data(data: dict[str, Any]) -> dict[str, Any]:
-    """
-    Validate and coerce extracted profile fields.
+def validate_profile(profile: ProfileExtraction) -> dict[str, Any]:
+    """Return the extracted data together with simple validation errors."""
 
-    Returns a workflow-friendly result with cleaned values plus errors. Views can
-    decide whether to ask follow-up questions, save a partial profile, or persist
-    a complete one.
-    """
-    cleaned = dict(data)
+    # Convert the Pydantic object into a normal dictionary.
+    data = profile.model_dump()
     errors: dict[str, str] = {}
 
-    for field in REQUIRED_PROFILE_FIELDS:
-        if cleaned.get(field) in (None, ""):
+    # Check the fields needed to complete the basic profile.
+    for field in REQUIRED_FIELDS:
+        if data[field] is None:
             errors[field] = "This field is required."
 
-    _clean_int(cleaned, errors, "age", minimum=13, maximum=120)
-    _clean_int(cleaned, errors, "height_cm", minimum=80, maximum=250)
-    _clean_decimal(cleaned, errors, "weight_kg", minimum=Decimal("25"), maximum=Decimal("400"))
-    _clean_int(cleaned, errors, "meals_per_day", minimum=1, maximum=8)
-    _clean_int(cleaned, errors, "max_cooking_minutes", minimum=0, maximum=300)
-    _clean_decimal(cleaned, errors, "weekly_budget", minimum=Decimal("0"), maximum=Decimal("9999"))
+    # Check a few realistic numeric limits.
+    if data["age"] is not None and not 13 <= data["age"] <= 120:
+        errors["age"] = "Age must be between 13 and 120."
 
-    _clean_choice(cleaned, errors, "sex", VALID_SEX)
-    _clean_choice(cleaned, errors, "activity_level", VALID_ACTIVITY_LEVELS)
-    _clean_choice(cleaned, errors, "goal", VALID_GOALS)
+    if data["height_cm"] is not None and not 80 <= data["height_cm"] <= 250:
+        errors["height_cm"] = "Height must be between 80 and 250 cm."
+
+    if data["weight_kg"] is not None and not 25 <= data["weight_kg"] <= 400:
+        errors["weight_kg"] = "Weight must be between 25 and 400 kg."
+
+    missing_fields = [field for field in REQUIRED_FIELDS if data[field] is None]
 
     return {
         "is_valid": not errors,
-        "cleaned_data": cleaned,
+        "data": data,
         "errors": errors,
-        "missing_fields": [field for field in REQUIRED_PROFILE_FIELDS if field in errors],
+        "missing_fields": missing_fields,
     }
-
-
-def _clean_choice(
-    cleaned: dict[str, Any],
-    errors: dict[str, str],
-    field: str,
-    valid_values: set[str],
-) -> None:
-    value = cleaned.get(field)
-    if value in (None, ""):
-        return
-
-    normalized = str(value).strip().lower()
-    if normalized not in valid_values:
-        errors[field] = f"Use one of: {', '.join(sorted(valid_values))}."
-        return
-
-    cleaned[field] = normalized
-
-
-def _clean_int(
-    cleaned: dict[str, Any],
-    errors: dict[str, str],
-    field: str,
-    *,
-    minimum: int,
-    maximum: int,
-) -> None:
-    value = cleaned.get(field)
-    if value in (None, ""):
-        return
-
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        errors[field] = "Use a whole number."
-        return
-
-    if parsed < minimum or parsed > maximum:
-        errors[field] = f"Use a value between {minimum} and {maximum}."
-        return
-
-    cleaned[field] = parsed
-
-
-def _clean_decimal(
-    cleaned: dict[str, Any],
-    errors: dict[str, str],
-    field: str,
-    *,
-    minimum: Decimal,
-    maximum: Decimal,
-) -> None:
-    value = cleaned.get(field)
-    if value in (None, ""):
-        return
-
-    try:
-        parsed = Decimal(str(value))
-    except (InvalidOperation, ValueError):
-        errors[field] = "Use a numeric value."
-        return
-
-    if parsed < minimum or parsed > maximum:
-        errors[field] = f"Use a value between {minimum} and {maximum}."
-        return
-
-    cleaned[field] = parsed

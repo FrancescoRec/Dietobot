@@ -18,6 +18,41 @@ This template provides a solid foundation for building Django applications with 
 
 ## Quick Start
 
+### Vertex AI Local Auth
+
+For local development, use Google Application Default Credentials:
+
+```powershell
+gcloud auth application-default login
+```
+
+This saves credentials on your machine for Google client libraries. You do not
+need a Gemini API key for Vertex AI.
+
+Vertex AI still runs in Google Cloud, so calls are not offline. The selected
+Google Cloud project must have the Vertex AI API enabled, and your account must
+have permission to use Vertex AI.
+
+The model for this step is hardcoded in
+`ai/extraction/step_01_profile.py`:
+
+```python
+MODEL_NAME = "gemini-2.5-flash"
+```
+
+Run the profile workflow with one user message:
+
+```python
+from ai.workflows.step_01_profile import run_profile_workflow
+
+result = run_profile_workflow(
+    "I am 30, male, 180 cm, 82 kg, moderately active."
+)
+```
+
+Change `MODEL_NAME` in the extraction file when you want that step to use a
+different Vertex model. There is no model or Vertex project setting in `.env`.
+
 ### Docker Development Setup
 
 

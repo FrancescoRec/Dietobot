@@ -1,67 +1,39 @@
-"""Step 01: extract profile fields from raw user or AI input."""
+"""Extract profile information from one user message."""
 
-from collections.abc import Mapping
-from typing import Any
+from typing import Literal
 
-
-PROFILE_FIELDS = (
-    "date_of_birth",
-    "age",
-    "sex",
-    "height_cm",
-    "weight_kg",
-    "activity_level",
-    "goal",
-    "meals_per_day",
-    "max_cooking_minutes",
-    "foods_disliked",
-    "dietary_preferences",
-    "allergies",
-    "weekly_budget",
-)
-
-NUMERIC_FIELDS = {
-    "age",
-    "height_cm",
-    "weight_kg",
-    "meals_per_day",
-    "max_cooking_minutes",
-    "weekly_budget",
-}
-
-TEXT_LIST_FIELDS = {
-    "foods_disliked",
-    "dietary_preferences",
-    "allergies",
-}
+from langchain_google_vertexai import ChatVertexAI
+from pydantic import BaseModel, Field
 
 
-def extract_profile_fields(raw_input: Mapping[str, Any]) -> dict[str, Any]:
-    """
-    Keep only fields that belong to UserProfile and normalize empty values.
+# model name
+MODEL_NAME = "gemini-2.5-flash"
 
-    The input can be a flat dict or a dict with a nested ``profile`` object.
-    This keeps the extraction layer focused on shape cleanup; business rules live
-    in ``ai.validation.step_01_profile``.
-    """
-    source = raw_input.get("profile", raw_input)
-    if not isinstance(source, Mapping):
-        return {}
+# Profile extraction model
+class ProfileExtraction(BaseModel):
+    """The profile fields that Vertex should find in the message."""
 
-    extracted: dict[str, Any] = {}
-    for field in PROFILE_FIELDS:
-        if field not in source:
-            continue
+    age: int | None = None
+    sex: Literal["male", "female"] | None = None
+    height_cm: int | None = None
+    weight_kg: float | None = None
+    activity_level: Literal["sedentary", "light", "moderate", "high"] | None = None
+    goal: Literal["lose", "maintain", "gain"] | None = None
+    meals_per_day: int | None = None
+    max_cooking_minutes: int | None = None
+    foods_disliked: list[str] = Field(default_factory=list)
+    dietary_preferences: list[str] = Field(default_factory=list)
+    allergies: list[str] = Field(default_factory=list)
+    weekly_budget: float | None = None
 
-        value = source[field]
-        if isinstance(value, str):
-            value = value.strip()
 
-        if value == "" and field in NUMERIC_FIELDS:
-            value = None
-        elif isinstance(value, list) and field in TEXT_LIST_FIELDS:
-            value = ", ".join(str(item).strip() for item in value if str(item).strip())
+def extract_profile(message: str) -> ProfileExtraction:
+    """Ask Vertex to turn a message into structured profile data."""
 
-        extracted[field] = value
+    # Create the model used only by this extraction step.
+    model = ChatVertexAI(model=MODEL_NAME, temperature=0)
 
-    return extracted
+    # Make Vertex return a ProfileExtraction object instead of free text.
+    structured_model = model.with_structured_output(ProfileExtraction)
+
+    return structured_model.invoke(message)
