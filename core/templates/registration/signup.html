@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign up | DietoBot{% endblock %}
+
+{% block content %}
+<section class="auth-page" aria-labelledby="signup-title">
+    <header class="page-heading">
+        <h1 id="signup-title">Create an account</h1>
+        <p>Start using your DietoBot assistant.</p>
+    </header>
+
+    <form class="auth-form" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button button-primary" type="submit">Sign up</button>
+    </form>
+
+    <p class="auth-switch">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+</section>
+{% endblock %}

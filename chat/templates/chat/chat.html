@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat | DietoBot{% endblock %}
+
+{% block content %}
+<section class="chat-page" aria-labelledby="chat-title">
+    <header class="page-heading">
+        <p class="eyebrow">DietoBot assistant</p>
+        <h1 id="chat-title">Chat</h1>
+        <p>Ask about your profile, nutrition, meals, or recipes.</p>
+    </header>
+
+    <div class="chat-window">
+        {% if message %}
+            <div class="message message-user">
+                <strong>You</strong>
+                <p>{{ message }}</p>
+            </div>
+
+            <div class="message message-bot">
+                <strong>DietoBot</strong>
+                <p>{{ reply }}</p>
+            </div>
+        {% else %}
+            <div class="message message-bot">
+                <strong>DietoBot</strong>
+                <p>Hello {{ user.username }}. Tell me about yourself and your nutrition goal.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <form class="chat-form" method="post">
+        {% csrf_token %}
+        <label class="visually-hidden" for="message">Message</label>
+        <input id="message" name="message" type="text" placeholder="Write a message..." autocomplete="off" required>
+        <button class="button button-primary" type="submit">Send</button>
+    </form>
+</section>
+{% endblock %}

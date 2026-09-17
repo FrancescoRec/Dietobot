@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Home | DietoBot{% endblock %}
+
+{% block content %}
+<section aria-labelledby="home-title">
+    <header class="page-heading">
+        <p class="eyebrow">Welcome, {{ user.username }}</p>
+        <h1 id="home-title">Your nutrition assistant</h1>
+        <p>Use the chat to build your profile and get help with your nutrition.</p>
+    </header>
+
+    <div class="home-actions">
+        <a class="button button-primary" href="{% url 'dietobot-chat' %}">Go to chat</a>
+    </div>
+</section>
+{% endblock %}

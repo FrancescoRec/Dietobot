@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DietoBot{% endblock %}</title>
+    <style>
+        :root {
+            --background: #f5f7f6;
+            --surface: #ffffff;
+            --text: #18231d;
+            --muted: #637068;
+            --border: #d9e0dc;
+            --primary: #16734a;
+            --primary-hover: #105c3b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+        }
+
+        a { color: inherit; }
+
+        .site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .navigation,
+        .page-content {
+            width: min(960px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .navigation {
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand {
+            color: var(--text);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-link,
+        .link-button {
+            border: 0;
+            background: none;
+            color: var(--muted);
+            cursor: pointer;
+            font: inherit;
+            padding: 0;
+            text-decoration: none;
+        }
+
+        .nav-link:hover,
+        .link-button:hover { color: var(--text); }
+
+        .page-content { padding: 64px 0; }
+
+        .page-heading { margin-bottom: 32px; }
+        .page-heading h1 { margin: 0 0 8px; font-size: 2rem; }
+        .page-heading p { margin: 0; color: var(--muted); }
+
+        .eyebrow {
+            color: var(--primary) !important;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 8px !important;
+            text-transform: uppercase;
+        }
+
+        .button {
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .button-primary { background: var(--primary); color: #ffffff; }
+        .button-primary:hover { background: var(--primary-hover); }
+
+        .auth-form,
+        .chat-window {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .auth-page { max-width: 440px; margin: 0 auto; }
+        .auth-form { padding: 24px; }
+        .auth-form p { margin: 0 0 18px; }
+        .auth-form label { display: block; font-weight: 700; margin-bottom: 6px; }
+
+        .auth-form input,
+        .chat-form input {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font: inherit;
+            padding: 10px 12px;
+        }
+
+        .auth-form .helptext,
+        .auth-form ul { color: var(--muted); font-size: 0.85rem; }
+        .auth-form .button { width: 100%; }
+        .auth-switch { color: var(--muted); margin-top: 20px; text-align: center; }
+
+        .home-actions { margin-top: 28px; }
+
+        .chat-page { max-width: 760px; margin: 0 auto; }
+        .chat-window { min-height: 360px; padding: 24px; }
+        .message { max-width: 520px; }
+        .message strong { font-size: 0.85rem; }
+        .message p { margin: 6px 0 0; }
+
+        .message-user {
+            background: #e7f3ed;
+            border-radius: 8px;
+            margin: 0 0 20px auto;
+            padding: 14px 16px;
+        }
+
+        .message-bot {
+            border-left: 3px solid var(--primary);
+            padding: 4px 0 4px 16px;
+        }
+
+        .chat-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 600px) {
+            .navigation { min-height: 56px; }
+            .page-content { padding: 40px 0; }
+            .user-name { display: none; }
+            .chat-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="{% url 'home' %}">DietoBot</a>
+
+            <div class="nav-actions">
+                {% if user.is_authenticated %}
+                    <span class="user-name">{{ user.username }}</span>
+                    <a class="nav-link" href="{% url 'dietobot-chat' %}">Chat</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button class="link-button" type="submit">Log out</button>
+                    </form>
+                {% else %}
+                    <a class="nav-link" href="{% url 'login' %}">Log in</a>
+                    <a class="nav-link" href="{% url 'signup' %}">Sign up</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

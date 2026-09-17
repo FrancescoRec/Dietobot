@@ -34,7 +34,8 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    'core',
+    'core.apps.CoreConfig',
+    'chat.apps.ChatConfig',
     'profiles.apps.ProfilesConfig',
 ]
 
