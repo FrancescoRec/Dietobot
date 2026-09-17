@@ -20,6 +20,7 @@ from ai.profile.validation import (
     missing_required_fields,
     validate_profile_extraction,
 )
+from nutrition.calculations import format_targets_message
 from profiles.models import UserProfile
 
 
@@ -42,9 +43,6 @@ OPTIONAL_FIELD_LABELS: dict[str, str] = {
 }
 
 REQUIRED_DONE_PREFIX = "Perfect, I now have all the essentials!\n\n"
-FULLY_COMPLETE_MESSAGE = (
-    "You're all set — I have everything I need to build your personalised meal plan! 🎉"
-)
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +165,12 @@ def ask_optional_node(state: ProfileState) -> dict:
 
 def fully_complete_node(state: ProfileState) -> dict:
     """Both phases done."""
-    return {"reply": FULLY_COMPLETE_MESSAGE, "profile_complete": True, "optional_complete": True}
+    profile = UserProfile.objects.get(user_id=state["user_id"])
+    return {
+        "reply": format_targets_message(profile),
+        "profile_complete": True,
+        "optional_complete": True,
+    }
 
 
 # ---------------------------------------------------------------------------

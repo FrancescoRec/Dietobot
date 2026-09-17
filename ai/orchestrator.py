@@ -3,6 +3,7 @@
 from typing import Any
 
 from ai.profile.workflow import run_profile_onboarding
+from nutrition.calculations import format_targets_message
 from profiles.models import UserProfile
 
 
@@ -20,9 +21,7 @@ def run_chat_workflow(user, message: str) -> dict[str, Any]:
     -------------
     * If the profile is still being built (required fields OR optional phase not
       done yet) → profile-onboarding workflow.
-    * If both phases are complete → TODO: route to the meal-planning workflow.
-      For now, return a placeholder acknowledgement so the graph never fires
-      the ``fully_complete`` node on every subsequent turn.
+    * If both phases are complete → return the deterministic nutrition targets.
     """
     # Check current profile state before deciding which workflow to run.
     try:
@@ -31,11 +30,7 @@ def run_chat_workflow(user, message: str) -> dict[str, Any]:
         profile_done = False
 
     if profile_done:
-        # TODO: replace with meal-planning workflow once it exists.
-        reply = (
-            "Your profile is already complete! "
-            "I'm ready to help with your meal plan — just ask away. 🥗"
-        )
+        reply = format_targets_message(user.profile)
         return {"reply": reply, "result": {"profile_complete": True, "optional_complete": True}}
 
     result = run_profile_onboarding(user, message)

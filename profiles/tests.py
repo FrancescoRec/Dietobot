@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from ai.profile.validation import missing_optional_fields, missing_required_fields, validate_profile_extraction
 from ai.profile.workflow import run_profile_onboarding
+from nutrition.calculations import calculate_targets
 from .models import UserProfile
 
 
@@ -88,6 +89,44 @@ class ProfileValidationTests(TestCase):
 
 
 # ---------------------------------------------------------------------------
+# Nutrition targets
+# ---------------------------------------------------------------------------
+
+class NutritionCalculationTests(TestCase):
+    def test_calculates_maintenance_targets_from_profile(self):
+        user = get_user_model().objects.create_user(username="targets")
+        profile = UserProfile.objects.create(
+            user=user, age=30, sex=UserProfile.Sex.MALE,
+            height_cm=180, weight_kg=Decimal("80.00"),
+            activity_level=UserProfile.ActivityLevel.MODERATE,
+            goal=UserProfile.Goal.MAINTAIN,
+        )
+
+        targets = calculate_targets(profile)
+
+        self.assertEqual(targets.bmr, 1780)
+        self.assertEqual(targets.maintenance_calories, 2760)
+        self.assertEqual(targets.calorie_min, 2660)
+        self.assertEqual(targets.calorie_max, 2860)
+        self.assertEqual(targets.protein_min, 110)
+        self.assertEqual(targets.protein_max, 145)
+
+    def test_loss_targets_respect_basic_calorie_floor(self):
+        user = get_user_model().objects.create_user(username="loss-targets")
+        profile = UserProfile.objects.create(
+            user=user, age=45, sex=UserProfile.Sex.FEMALE,
+            height_cm=155, weight_kg=Decimal("52.00"),
+            activity_level=UserProfile.ActivityLevel.SEDENTARY,
+            goal=UserProfile.Goal.LOSE,
+        )
+
+        targets = calculate_targets(profile)
+
+        self.assertGreaterEqual(targets.calorie_min, 1200)
+        self.assertGreaterEqual(targets.calorie_max, targets.calorie_min)
+
+
+# ---------------------------------------------------------------------------
 # Workflow
 # ---------------------------------------------------------------------------
 
@@ -127,6 +166,8 @@ class OnboardingWorkflowTests(TestCase):
 
         self.assertTrue(result["profile_complete"])
         self.assertTrue(result["optional_complete"])
+        self.assertIn("Here are your starting targets", result["reply"])
+        self.assertIn("Maintenance:", result["reply"])
 
     def test_missing_required_asks_follow_up(self):
         """If required fields are missing, bot asks for them (no optional phase yet)."""
