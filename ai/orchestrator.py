@@ -3,6 +3,7 @@
 from typing import Any
 
 from ai.profile.workflow import run_profile_onboarding
+from profiles.models import UserProfile
 
 
 def run_chat_workflow(user, message: str) -> dict[str, Any]:
@@ -14,8 +15,29 @@ def run_chat_workflow(user, message: str) -> dict[str, Any]:
 
     Returns:
         ``{"reply": str, "result": dict}``
+
+    Routing logic
+    -------------
+    * If the profile is still being built (required fields OR optional phase not
+      done yet) → profile-onboarding workflow.
+    * If both phases are complete → TODO: route to the meal-planning workflow.
+      For now, return a placeholder acknowledgement so the graph never fires
+      the ``fully_complete`` node on every subsequent turn.
     """
-    # For now, every message goes to the profile-onboarding workflow.
-    # Later, add routing here for meals, recipes, and other workflows.
+    # Check current profile state before deciding which workflow to run.
+    try:
+        profile = user.profile  # OneToOneField reverse accessor
+        profile_done = profile.profile_complete and profile.optional_questions_asked
+    except UserProfile.DoesNotExist:
+        profile_done = False
+
+    if profile_done:
+        # TODO: replace with meal-planning workflow once it exists.
+        reply = (
+            "Your profile is already complete! "
+            "I'm ready to help with your meal plan — just ask away. 🥗"
+        )
+        return {"reply": reply, "result": {"profile_complete": True, "optional_complete": True}}
+
     result = run_profile_onboarding(user, message)
     return {"reply": result["reply"], "result": result}

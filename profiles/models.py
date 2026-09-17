@@ -75,5 +75,21 @@ class UserProfile(models.Model):
             and self.goal
         )
 
+    @property
+    def optional_questions_asked(self) -> bool:
+        """True once the user has provided at least one optional detail.
+
+        Derived from the optional field values — no extra DB column needed.
+        Trade-off: if the user provides *no* optional info the bot will ask
+        again on the next turn.  In practice the prompt explicitly requests
+        budget and meal count, so at least one field is populated after a reply.
+        """
+        return bool(
+            self.foods_disliked
+            or self.dietary_preferences
+            or self.allergies
+            or self.weekly_budget is not None
+        )
+
     def __str__(self):
         return f"Profile of {self.user}"

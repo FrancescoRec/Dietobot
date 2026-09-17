@@ -105,3 +105,22 @@ def missing_required_fields(profile: UserProfile) -> list[str]:
     if not profile.goal:
         missing.append("goal")
     return missing
+
+
+def missing_optional_fields(profile: UserProfile) -> list[str]:
+    """Return names of optional fields that have not been explicitly set yet.
+
+    Note: meals_per_day and max_cooking_minutes are excluded because they carry
+    meaningful defaults (3 meals, 30 min) and the bot always asks about them
+    in the optional-phase prompt regardless.
+    """
+    missing = []
+    if not profile.foods_disliked:
+        missing.append("foods_disliked")
+    if not profile.dietary_preferences:
+        missing.append("dietary_preferences")
+    if not profile.allergies:
+        missing.append("allergies")
+    if profile.weekly_budget is None:
+        missing.append("weekly_budget")
+    return missing
