@@ -1,22 +1,17 @@
 from decimal import Decimal
 from types import SimpleNamespace
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.urls import reverse
 
-from ai.workflows.profile_onboarding import run_onboarding
-from ai.workflows.profile_onboarding.step_02_profile_validation import (
-    missing_required_fields,
-    validate_profile_extraction,
-)
+from ai.profile.validation import missing_required_fields, validate_profile_extraction
+from ai.profile.workflow import run_profile_onboarding
 
 from .models import UserProfile
 
 
 class ProfileValidationTests(TestCase):
-    def test_missing_required_fields_accepts_age_or_date_of_birth(self):
+    def test_missing_required_fields_returns_empty_for_complete_profile(self):
         user = get_user_model().objects.create_user(username="sam")
         profile = UserProfile.objects.create(
             user=user,
@@ -33,7 +28,6 @@ class ProfileValidationTests(TestCase):
     def test_validate_profile_extraction_keeps_only_valid_values(self):
         extraction = SimpleNamespace(
             age=27,
-            date_of_birth=None,
             sex="male",
             height_cm=182,
             weight_kg=84,
@@ -66,7 +60,6 @@ class OnboardingWorkflowTests(TestCase):
         def fake_extractor(message):
             return SimpleNamespace(
                 age=27,
-                date_of_birth=None,
                 sex="female",
                 height_cm=168,
                 weight_kg=64,
@@ -80,7 +73,7 @@ class OnboardingWorkflowTests(TestCase):
                 weekly_budget=None,
             )
 
-        result = run_onboarding(
+        result = run_profile_onboarding(
             user,
             "I'm 27, female, 168 cm, 64 kg, lightly active, maintaining.",
             extractor=fake_extractor,
@@ -97,7 +90,6 @@ class OnboardingWorkflowTests(TestCase):
         def fake_extractor(message):
             return SimpleNamespace(
                 age=27,
-                date_of_birth=None,
                 sex=None,
                 height_cm=182,
                 weight_kg=84,
@@ -111,29 +103,12 @@ class OnboardingWorkflowTests(TestCase):
                 weekly_budget=None,
             )
 
-        result = run_onboarding(user, "I am 27, 182 cm, 84 kg, gym often.", extractor=fake_extractor)
+        result = run_profile_onboarding(
+            user,
+            "I am 27, 182 cm, 84 kg, gym often.",
+            extractor=fake_extractor,
+        )
 
         self.assertFalse(result["profile_complete"])
         self.assertEqual(result["missing_fields"], ["sex"])
         self.assertIn("male or female", result["reply"])
-
-
-class ChatViewTests(TestCase):
-    def test_chat_page_requires_login(self):
-        response = self.client.get(reverse("dietobot-chat"))
-
-        self.assertEqual(response.status_code, 302)
-
-    def test_chat_page_posts_without_live_vertex_when_workflow_is_patched(self):
-        user = get_user_model().objects.create_user(username="avi", password="pw")
-        self.client.login(username="avi", password="pw")
-
-        with patch(
-            "profiles.views.run_onboarding",
-            return_value={"reply": "What is your height?"},
-        ) as workflow:
-            response = self.client.post(reverse("dietobot-chat"), {"message": "I am 30."})
-
-        self.assertEqual(response.status_code, 200)
-        workflow.assert_called_once()
-        self.assertContains(response, "What is your height?")

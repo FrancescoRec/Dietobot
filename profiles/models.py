@@ -24,7 +24,6 @@ class UserProfile(models.Model):
         related_name="profile",
     )
 
-    date_of_birth = models.DateField(null=True, blank=True)
     age = models.PositiveSmallIntegerField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=Sex.choices, blank=True)
 
@@ -61,9 +60,20 @@ class UserProfile(models.Model):
         blank=True,
     )
 
-    profile_complete = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def profile_complete(self) -> bool:
+        """True when all six required fields are filled in."""
+        return bool(
+            self.age
+            and self.sex
+            and self.height_cm
+            and self.weight_kg
+            and self.activity_level
+            and self.goal
+        )
 
     def __str__(self):
         return f"Profile of {self.user}"

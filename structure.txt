@@ -1,16 +1,30 @@
 dietobot/
 ├── .cursor/
+│   └── rules/
+│       └── rules.md
+│
 ├── ai/
-│   ├── extraction/
+│   ├── profile/
 │   │   ├── __init__.py
-│   │   └── step_01_profile.py
-│   ├── validation/
+│   │   ├── extraction.py       ← Gemini structured extraction (single message)
+│   │   ├── validation.py       ← validate_profile_extraction(), missing_required_fields()
+│   │   └── workflow.py         ← LangGraph onboarding graph + run_profile_onboarding()
+│   ├── __init__.py
+│   └── orchestrator.py         ← run_chat_workflow(user, message)
+│
+├── chat/
+│   ├── migrations/
 │   │   ├── __init__.py
-│   │   └── step_01_profile.py
-│   ├── workflows/
-│   │   ├── __init__.py
-│   │   └── step_01_profile.py
-│   └── __init__.py
+│   │   └── 0001_initial.py
+│   ├── templates/
+│   │   └── chat/
+│   │       └── chat.html
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py               ← ChatMessage
+│   ├── tests.py
+│   ├── urls.py
+│   └── views.py                ← chat view, calls run_chat_workflow
 │
 ├── config/
 │   ├── settings/
@@ -24,6 +38,13 @@ dietobot/
 │   └── wsgi.py
 │
 ├── core/
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── core/
+│   │   │   └── home.html
+│   │   └── registration/
+│   │       ├── login.html
+│   │       └── signup.html
 │   ├── __init__.py
 │   ├── admin.py
 │   ├── apps.py
@@ -35,21 +56,15 @@ dietobot/
 ├── profiles/
 │   ├── migrations/
 │   │   ├── __init__.py
-│   │   └── 0001_initial.py
+│   │   ├── 0001_initial.py
+│   │   └── 0002_remove_date_of_birth_profile_complete.py
 │   ├── __init__.py
 │   ├── admin.py
 │   ├── apps.py
-│   ├── models.py
+│   ├── models.py               ← UserProfile (profile_complete is a @property)
 │   ├── tests.py
 │   ├── urls.py
 │   └── views.py
-│
-├── templates/
-│   ├── core/
-│   │   └── home.html
-│   ├── registration/
-│   │   └── login.html
-│   └── base.html
 │
 ├── .env
 ├── .gitignore

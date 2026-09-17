@@ -15,5 +15,5 @@ class UserProfileAdmin(admin.ModelAdmin):
         "goal",
         "profile_complete",
     )
-    list_filter = ("profile_complete", "sex", "activity_level", "goal")
+    list_filter = ("sex", "activity_level", "goal")
     search_fields = ("user__username", "user__email")
