@@ -141,6 +141,20 @@ Do not invent requirements.
 
 For small implementation details, choose the simplest reasonable solution.
 
+## 13. Do not run project code
+
+Do not run project code, Python scripts, Django management commands, tests, migrations, servers, package installers, or other executable project workflows from the assistant side.
+
+When testing, validation, migrations, or Django commands are needed, provide the exact Docker command for the user to run instead.
+
+The expected command shape is:
+
+```text
+docker-compose run --rm django python manage.py <command>
+```
+
+The user runs these commands.
+
 ## Final principle
 
 The project should feel like:
