@@ -1,0 +1,14 @@
+# Django Base Project Template - Core Dependencies
+# Django and core dependencies
+Django>=5.0,<5.1
+psycopg[binary]>=3.2
+django-environ>=0.11
+whitenoise>=6.6
+gunicorn>=21.2
+
+# Optional development dependencies (uncomment as needed)
+# django-debug-toolbar>=4.4
+# django-extensions>=3.2
+# pillow>=10.0  # For image handling
+# celery>=5.3   # For background tasks
+# redis>=4.6    # For caching and Celery broker

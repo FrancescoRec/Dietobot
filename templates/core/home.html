@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Welcome!</h1>
+            <p class="lead">
+                You are logged in as <strong>{{ user.username }}</strong>.
+            </p>
+            <hr class="my-4">
+            <p>
+                From here you can access all system features.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Dashboard</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">View statistics and main information.</p>
+                <a href="#" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Management</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Manage data and system configurations.</p>
+                <a href="#" class="btn btn-secondary">Manage</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Generate and view detailed reports.</p>
+                <a href="#" class="btn btn-success">View Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">User Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email|default:"Not specified" }}</p>
+                <p><strong>Last login:</strong> {{ user.last_login|date:"M d, Y H:i" }}</p>
+                <p><strong>Registration date:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
