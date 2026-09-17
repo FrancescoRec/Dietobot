@@ -1,38 +1,33 @@
-## Data flow after the change
+## Data flow
 
 ```mermaid
 flowchart TD
     A["POST /dietobot/"] --> B["chat.views.chat"]
     B --> C["run_chat_workflow(user, message)"]
-    C -->|"profile_complete\n& optional_questions_asked"| Z["orchestrator shortcut\n(→ meal planning later)"]
+
+    C -->|"profile.optional_complete"| Z["orchestrator shortcut\n→ meal planning later"]
     C -->|"onboarding still\nin progress"| D["run_profile_onboarding(user, message)"]
 
-    D --> E["load_context node\n(missing_required_fields · was_profile_complete)"]
-    E --> F["extract node\n(Gemini Flash, single message)\nSaves ALL fields incl. optional"]
-    F --> G["validate_and_save node\n(validate + UserProfile.update_or_create)"]
-    G --> H["check_profile node\n(missing_required_fields after save)"]
+    D --> LC["load_context\n(missing required · was_profile_complete)"]
+    LC --> EX["extract\n(Gemini · all fields including optional)"]
+    EX --> VS["validate_and_save\n(UserProfile.update_or_create)"]
+    VS --> CP["check_profile\n(missing required · optional_questions_asked)"]
 
-    H -->|"required fields\nstill missing"| I["ask_follow_up node\n(Phase 1 · FOLLOW_UP_QUESTIONS dict)"]
-    H -->|"required fields\ncomplete"| J["check_optional node\n(optional_questions_asked flag)"]
+    CP -->|"required fields\nstill missing"| F1["ask_follow_up\nPhase 1"]
+    CP -->|"required complete\noptional not asked yet"| F2["ask_optional\nPhase 2 — asked once\nsets optional_questions_asked = True"]
+    CP -->|"both phases done"| FC["fully_complete"]
 
-    J -->|"not yet asked"| K["ask_optional node\n(Phase 2 · optional fields LLM)\nSets optional_questions_asked = True"]
-    J -->|"already asked"| L["fully_complete node"]
-
-    I --> M["reply → ChatMessage → redirect"]
-    K --> M
-    L --> M
-    Z --> M
+    F1 --> R["reply → ChatMessage → redirect"]
+    F2 --> R
+    FC --> R
+    Z  --> R
 ```
 
-### Phase summary
+### Model properties
 
-| Phase | Trigger | Fields covered | Node |
-|-------|---------|---------------|------|
-| **1 – Required** | Every turn until complete | age, sex, height_cm, weight_kg, activity_level, goal | `ask_follow_up` |
-| **2 – Optional** | Once, right after Phase 1 finishes | meals_per_day, max_cooking_minutes, foods_disliked, dietary_preferences, allergies, weekly_budget | `ask_optional` |
-| **Done** | After Phase 2 prompt was sent | — | `fully_complete` / orchestrator shortcut |
+| Property | Derived from |
+|---|---|
+| `profile_complete` | all 6 required fields non-null |
+| `optional_complete` | `profile_complete and optional_questions_asked` |
 
-> **Key property**: extraction runs and saves *all* fields (including optional) on *every* turn,
-> so any info the user volunteers early is never lost — only the *questioning* of optional fields
-> is deferred to Phase 2.
-```
+`optional_questions_asked` is a `BooleanField` — it records the *event* of the prompt being sent, which cannot be derived from field values alone (a user might volunteer allergy info in Phase 1, which would flip a field-value property too early).

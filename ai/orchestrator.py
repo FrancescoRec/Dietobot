@@ -26,8 +26,7 @@ def run_chat_workflow(user, message: str) -> dict[str, Any]:
     """
     # Check current profile state before deciding which workflow to run.
     try:
-        profile = user.profile  # OneToOneField reverse accessor
-        profile_done = profile.profile_complete and profile.optional_questions_asked
+        profile_done = user.profile.optional_complete
     except UserProfile.DoesNotExist:
         profile_done = False
 

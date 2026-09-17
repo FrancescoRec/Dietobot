@@ -24,41 +24,26 @@ class UserProfile(models.Model):
         related_name="profile",
     )
 
-    age = models.PositiveSmallIntegerField(null=True, blank=True)
-    sex = models.CharField(max_length=10, choices=Sex.choices, blank=True)
+    # --- Phase 1: required ---
+    age            = models.PositiveSmallIntegerField(null=True, blank=True)
+    sex            = models.CharField(max_length=10, choices=Sex.choices, blank=True)
+    height_cm      = models.PositiveSmallIntegerField(null=True, blank=True)
+    weight_kg      = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    activity_level = models.CharField(max_length=20, choices=ActivityLevel.choices, blank=True)
+    goal           = models.CharField(max_length=10, choices=Goal.choices, blank=True)
 
-    height_cm = models.PositiveSmallIntegerField(null=True, blank=True)
-    weight_kg = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
-
-    activity_level = models.CharField(
-        max_length=20,
-        choices=ActivityLevel.choices,
-        blank=True,
-    )
-
-    goal = models.CharField(
-        max_length=10,
-        choices=Goal.choices,
-        blank=True,
-    )
-
-    meals_per_day = models.PositiveSmallIntegerField(default=3)
+    # --- Phase 2: optional ---
+    meals_per_day       = models.PositiveSmallIntegerField(default=3)
     max_cooking_minutes = models.PositiveSmallIntegerField(default=30)
-    foods_disliked = models.TextField(blank=True)
+    foods_disliked      = models.TextField(blank=True)
     dietary_preferences = models.TextField(blank=True)
-    allergies = models.TextField(blank=True)
+    allergies           = models.TextField(blank=True)
+    weekly_budget       = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
-    weekly_budget = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
+    # Records the event "optional-fields prompt was sent".
+    # A @property can't do this: a user can volunteer allergies during Phase 1,
+    # which would make a field-value-based property flip too early.
+    optional_questions_asked = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -76,20 +61,9 @@ class UserProfile(models.Model):
         )
 
     @property
-    def optional_questions_asked(self) -> bool:
-        """True once the user has provided at least one optional detail.
-
-        Derived from the optional field values — no extra DB column needed.
-        Trade-off: if the user provides *no* optional info the bot will ask
-        again on the next turn.  In practice the prompt explicitly requests
-        budget and meal count, so at least one field is populated after a reply.
-        """
-        return bool(
-            self.foods_disliked
-            or self.dietary_preferences
-            or self.allergies
-            or self.weekly_budget is not None
-        )
+    def optional_complete(self) -> bool:
+        """True once both onboarding phases are done."""
+        return self.profile_complete and self.optional_questions_asked
 
     def __str__(self):
         return f"Profile of {self.user}"
