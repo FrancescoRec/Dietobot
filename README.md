@@ -18,20 +18,50 @@ This template provides a solid foundation for building Django applications with 
 
 ## Quick Start
 
-### Vertex AI Local Auth
+### Vertex AI Setup
 
-For local development, use Google Application Default Credentials:
+Set the Google Cloud project and enable the Vertex AI Platform API:
+
+```powershell
+gcloud config set project dietobot
+gcloud services enable aiplatform.googleapis.com --project=dietobot
+```
+
+Create the local Application Default Credentials (ADC) JSON file and set its
+quota project:
 
 ```powershell
 gcloud auth application-default login
+gcloud auth application-default set-quota-project dietobot
 ```
 
-This saves credentials on your machine for Google client libraries. You do not
-need a Gemini API key for Vertex AI.
+On Windows, the login creates this credentials file:
 
-Vertex AI still runs in Google Cloud, so calls are not offline. The selected
-Google Cloud project must have the Vertex AI API enabled, and your account must
-have permission to use Vertex AI.
+```text
+C:\Users\YOUR_USERNAME\AppData\Roaming\gcloud\application_default_credentials.json
+```
+
+Docker Compose mounts that JSON file inside the Django container as read-only:
+
+```text
+/gcp/adc.json
+```
+
+Docker Compose sets the credentials path with:
+
+```env
+GOOGLE_APPLICATION_CREDENTIALS=/gcp/adc.json
+```
+
+The `.env` file identifies the Google Cloud project:
+
+```env
+GOOGLE_CLOUD_PROJECT=dietobot
+```
+
+You do not need a Gemini API key. Vertex AI still runs in Google Cloud, so calls
+are not offline. Your account must have permission to use Vertex AI in the
+`dietobot` project, and billing must be enabled for that project.
 
 The model for this step is hardcoded in
 `ai/extraction/step_01_profile.py`:
@@ -51,7 +81,7 @@ result = run_profile_workflow(
 ```
 
 Change `MODEL_NAME` in the extraction file when you want that step to use a
-different Vertex model. There is no model or Vertex project setting in `.env`.
+different Vertex model. The model is not configured in `.env`.
 
 ### Docker Development Setup
 

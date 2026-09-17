@@ -5,8 +5,10 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - ${APPDATA}/gcloud/application_default_credentials.json:/gcp/adc.json:ro
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.local
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/adc.json
     env_file:
       - .env
     depends_on:
