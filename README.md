@@ -1,323 +1,184 @@
-# Django Base Project Template
+<div align="center">
+  <img src="logo.gif" alt="DietoBot apple logo" width="420">
+  <h1>DietoBot</h1>
+  <p><strong>A conversational nutrition assistant that turns a friendly chat into a useful personal profile and daily nutrition targets.</strong></p>
+</div>
 
-A comprehensive Django 5 base project template with PostgreSQL database, Docker support, and production-ready configuration (optimized for Railway deployment). 
-This template provides a solid foundation for building Django applications with modern best practices.
+## What is DietoBot?
 
-## Features
+DietoBot is a Django web app that collects a user's nutrition details through conversation. It uses Gemini on Google Vertex AI to understand each answer, stores the resulting profile, and calculates personalized calorie and macronutrient targets. Users can create an account, open one chat, and continue the same conversation later.
 
-- **Django 5.0+** with Python 3.11+
-- **Modular Settings** - Separated settings for development, staging, and production
-- **Database Support** - PostgreSQL database
-- **Docker Ready** - Complete Docker and Docker Compose configuration
-- **Authentication** - Built-in user authentication with login/logout
-- **Modern UI** - Bootstrap-styled responsive templates
-- **Static Files** - WhiteNoise for static file serving
-- **Production Ready** - Security settings and Gunicorn WSGI server
-- **Environment Management** - Comprehensive environment variable configuration
-- **Development Tools** - Ready for debugging and testing
+## What it includes
 
-## Quick Start
+- Account signup, login, and logout
+- A persistent chat history for each user
+- Guided collection of age, sex, height, weight, activity level, and goal
+- Optional preferences such as allergies, disliked foods, cooking time, and budget
+- Calorie and macronutrient calculations
+- Gemini models through Google Vertex AI; no Gemini API key is required
+- PostgreSQL and Docker support, plus SQLite for lightweight local development
+- Responsive pages designed for desktop and phone screens
 
-### Vertex AI Setup
+## Quick start with Docker
 
-Set the Google Cloud project and enable the Vertex AI Platform API:
+### 1. Requirements
 
-```powershell
-gcloud config set project dietobot
-gcloud services enable aiplatform.googleapis.com --project=dietobot
-```
+Install these tools before starting:
 
-Create the local Application Default Credentials (ADC) JSON file and set its
-quota project:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
+- Access to a Google Cloud project with billing enabled
 
-```powershell
-gcloud auth application-default login
-gcloud auth application-default set-quota-project dietobot
-```
+The commands below use `dietobot` as the Google Cloud project ID. Replace it if your project has a different ID.
 
-On Windows, the login creates this credentials file:
+### 2. Create the environment file
 
-```text
-C:\Users\YOUR_USERNAME\AppData\Roaming\gcloud\application_default_credentials.json
-```
+From the project directory, run:
 
-Docker Compose mounts that JSON file inside the Django container as read-only:
-
-```text
-/gcp/adc.json
-```
-
-Docker Compose sets the credentials path with:
-
-```env
-GOOGLE_APPLICATION_CREDENTIALS=/gcp/adc.json
-```
-
-The `.env` file identifies the Google Cloud project:
-
-```env
-GOOGLE_CLOUD_PROJECT=dietobot
-```
-
-You do not need a Gemini API key. Vertex AI still runs in Google Cloud, so calls
-are not offline. Your account must have permission to use Vertex AI in the
-`dietobot` project, and billing must be enabled for that project.
-
-The model for this step is hardcoded in
-`ai/extraction/step_01_profile.py`:
-
-```python
-MODEL_NAME = "gemini-2.5-flash"
-```
-
-Run the profile workflow with one user message:
-
-```python
-from ai.workflows.step_01_profile import run_profile_workflow
-
-result = run_profile_workflow(
-    "I am 30, male, 180 cm, 82 kg, moderately active."
-)
-```
-
-Change `MODEL_NAME` in the extraction file when you want that step to use a
-different Vertex model. The model is not configured in `.env`.
-
-### Docker Development Setup
-
-
-1. **Copy environment file:**
 ```powershell
 Copy-Item env.example .env
 ```
 
-2. **Build and start containers:**
+Open `.env` and set a unique `SECRET_KEY`. The included database values already match `docker-compose.yml`.
+
+### 3. Configure Vertex AI
+
+Sign in, select the project, enable Vertex AI, and create Application Default Credentials:
+
 ```powershell
-docker-compose build
-docker-compose up
+gcloud auth login
+gcloud config set project dietobot
+gcloud services enable aiplatform.googleapis.com --project=dietobot
+gcloud auth application-default login
+gcloud auth application-default set-quota-project dietobot
 ```
 
-3. **Run initial migrations:**
+On Windows, Google Cloud CLI creates the credentials file under `%APPDATA%\gcloud`. Docker Compose mounts that file into the Django container at `/gcp/adc.json`.
+
+Your Google account needs permission to use Vertex AI. The app currently uses `gemini-2.5-flash` for structured extraction and `gemini-2.5-flash-lite` for conversational replies.
+
+### 4. Start the app
+
 ```powershell
-docker-compose run --rm django python manage.py migrate
-docker-compose run --rm django python manage.py createsuperuser
+docker compose up --build
 ```
 
-4. **Access the application:**
-   - Application: http://localhost:8000
-   - PostgreSQL: localhost:5433 (mapped from container port 5432)
+Docker starts PostgreSQL, applies the Django migrations, and serves the app. Open [http://localhost:8000](http://localhost:8000), create an account, and select **Go to chat**.
 
-## Project Structure
+Stop the app with `Ctrl+C`. Start it again later with:
 
-```
-django-base/
-├── config/                 # Django project configuration
-│   ├── settings/          # Split settings for different environments
-│   │   ├── __init__.py
-│   │   ├── base.py        # Common settings shared across environments
-│   │   ├── local.py       # Development settings
-│   │   └── prod.py        # Production settings
-│   ├── __init__.py
-│   ├── asgi.py           # ASGI configuration
-│   ├── urls.py           # Main URL configuration
-│   └── wsgi.py           # WSGI configuration
-├── core/                   # Main application (rename as needed)
-│   ├── __init__.py
-│   ├── admin.py          # Django admin configuration
-│   ├── apps.py           # App configuration
-│   ├── models.py         # Database models
-│   ├── tests.py          # Test cases
-│   ├── urls.py           # App URL patterns
-│   └── views.py          # View functions/classes
-├── templates/              # HTML templates
-│   ├── base.html         # Base template with Bootstrap
-│   ├── core/
-│   │   └── home.html     # Home page template
-│   └── registration/
-│       └── login.html    # Login page template
-├── static/                 # Static files (CSS, JS, images)
-├── media/                  # User uploaded files
-├── docker-compose.yml      # Docker Compose configuration
-├── Dockerfile              # Docker image definition
-├── requirements.txt        # Python dependencies
-├── env.example             # Environment variables template
-├── .gitignore             # Git ignore rules
-├── manage.py              # Django management script
-└── README.md              # This file
+```powershell
+docker compose up
 ```
 
-## Environment Variables
+## Local setup without Docker
 
-Copy `env.example` to `.env` and configure:
+This option uses SQLite, so PostgreSQL is not required. Python 3.11 or newer and Google Cloud CLI are still required.
 
-### Required Variables
-- `SECRET_KEY`: Django secret key (change in production)
-- `DEBUG`: Enable/disable debug mode
-- `DB_NAME`, `DB_USER`, `DB_PASSWORD`: Database credentials
-- `DB_HOST`, `DB_PORT`: Database connection
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item env.example .env
+```
 
-### Optional Variables
-- `ALLOWED_HOSTS`: Comma-separated list of allowed hosts (production)
-- `DJANGO_SUPERUSER_*`: Automatic superuser creation (for Railway deployment)
-
-## Database Configuration
-
-The project supports two database configuration methods:
-
-### Railway Deployment (Production)
-
-Railway automatically provides a `DATABASE_URL` environment variable when you add a PostgreSQL service. The project automatically detects and uses this:
-
-1. **Add PostgreSQL service** in Railway dashboard
-2. **Click "Connect"** - Railway automatically sets `DATABASE_URL`
-3. **No manual configuration needed!** The project automatically uses `DATABASE_URL`
-
-The `DATABASE_URL` format: `postgresql://user:password@host:port/dbname`
-
-### Local Development (Docker)
-
-For local development, use individual database variables in your `.env` file:
+In `.env`, change:
 
 ```env
-DB_NAME=myproject
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=db  # Use 'db' for Docker Compose (service name)
-DB_PORT=5432
+USE_SQLITE=true
 ```
 
-**Note:** The project automatically detects which method to use:
-- If `DATABASE_URL` exists → uses Railway/Heroku style connection
-- Otherwise → falls back to individual variables for local development
+Then authenticate with Google Cloud and start Django:
 
-## Available Commands
-
-### Django Management Commands (with Docker)
-```bash
-# All Django commands must be run inside the container
-docker-compose run --rm django python manage.py migrate
-docker-compose run --rm django python manage.py createsuperuser
-docker-compose run --rm django python manage.py makemigrations
-docker-compose run --rm django python manage.py collectstatic
-docker-compose run --rm django python manage.py test
+```powershell
+gcloud auth application-default login
+gcloud auth application-default set-quota-project dietobot
+python manage.py migrate
+python manage.py runserver
 ```
 
-**Note:** The `--rm` flag automatically removes the container after the command completes.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## Production Deployment
+## Environment settings
 
-### Railway Deployment (Optimized)
+| Variable | Purpose | Development example |
+| --- | --- | --- |
+| `DJANGO_SETTINGS_MODULE` | Selects Django settings | `config.settings.local` |
+| `SECRET_KEY` | Signs Django sessions and security data | Use a private random value |
+| `DEBUG` | Enables local debug pages | `True` |
+| `DB_NAME` | PostgreSQL database name | `dietobot` |
+| `DB_USER` | PostgreSQL user | `postgres` |
+| `DB_PASSWORD` | PostgreSQL password | `postgres` |
+| `DB_HOST` | PostgreSQL host | `db` in Docker |
+| `DB_PORT` | PostgreSQL port inside Docker | `5432` |
+| `USE_SQLITE` | Uses SQLite instead of PostgreSQL | `false` |
+| `GOOGLE_CLOUD_PROJECT` | Vertex AI project ID | `dietobot` |
+| `ALLOWED_HOSTS` | Production host names | Your deployed domain |
 
-This project is **optimized for Railway deployment**. You can deploy it directly without any changes:
+Do not commit `.env` or Google credentials.
 
-1. **Connect your repository to Railway**
-2. **Set environment variables** in Railway dashboard:
-   - `DJANGO_SETTINGS_MODULE=config.settings.prod`
-   - `SECRET_KEY` (generate a strong secret key)
-   - `DEBUG=False`
-   - `ALLOWED_HOSTS` (your Railway domain)
-   - **Database**: Just create a PostgreSQL service and click "Connect" - Railway automatically sets `DATABASE_URL` (no manual variables needed!)
-   - `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, `DJANGO_SUPERUSER_PASSWORD` (optional)
+## Useful commands
 
-3. **Media Files Storage** (for user uploads):
-   
-   **Option 1: Railway Volume (Recommended for small quantities)**
-   - In Railway dashboard, go to your service → "Volumes" tab
-   - Click "Add Volume" and mount it to `/app/media` in your service
-   - This is super easy and perfect for small to medium file quantities
-   - Files persist across deployments
-   
-   **Option 2: Cloud Storage Bucket (For larger scale)**
-   - Use AWS S3, Google Cloud Storage, or similar
-   - Configure `DEFAULT_FILE_STORAGE` in `config/settings/prod.py`
-   - More complex setup but better for production at scale
+Run commands in Docker:
 
-4. **Deploy!** Railway will:
-   - Build the Docker image using the `Dockerfile`
-   - Run `start.sh` which automatically:
-     - Runs migrations
-     - Creates superuser (if configured)
-     - Collects static files
-     - Starts the server with Gunicorn
-
-**No manual setup required!** The `start.sh` script handles everything automatically.
-
-
-## Security Features
-
-The production settings include:
-
-- Secure cookies (HTTPS only)
-- HSTS headers
-- Content type nosniff
-- XSS protection
-- Secure referrer policy
-- X-Frame-Options protection
-- CSRF protection
-
-## Authentication
-
-- Login URL: `/accounts/login/`
-- Logout URL: `/accounts/logout/`
-- Home page: `/` (requires authentication)
-
-Default redirects:
-- After login: home page
-- After logout: login page
-
-## Development
-
-### Adding New Apps
-1. Create the app: `docker-compose run --rm django python manage.py startapp appname`
-2. Add to `INSTALLED_APPS` in `config/settings/base.py`
-3. Include URLs in `config/urls.py`
-4. Create templates in `templates/appname/` directory
-
-### Database Migrations
-```bash
-docker-compose run --rm django python manage.py makemigrations
-docker-compose run --rm django python manage.py migrate
+```powershell
+docker compose run --rm django python manage.py migrate
+docker compose run --rm django python manage.py createsuperuser
+docker compose run --rm django python manage.py test
+docker compose logs -f django
 ```
 
-### Running Tests
-```bash
-docker-compose run --rm django python manage.py test
-docker-compose run --rm django python manage.py test core  # Test specific app
+Run the tests locally with SQLite:
+
+```powershell
+$env:USE_SQLITE = "true"
+python manage.py test
 ```
+
+## Project map
+
+```text
+ai/                    Gemini extraction and LangGraph conversation workflow
+chat/                  Chat view, messages, URLs, templates, and tests
+core/                  Home page, authentication templates, and shared design
+nutrition/             Calorie and macronutrient calculations
+profiles/              Stored nutrition profile and validation
+config/settings/       Shared, local, and production Django settings
+logo.gif               Logo shown here in the README
+core/static/images/logo.gif Logo served by the web app
+```
+
+The main routes are:
+
+- `/` - home after login
+- `/dietobot/` - nutrition chat
+- `/accounts/signup/` - create an account
+- `/accounts/login/` - log in
+- `/accounts/logout/` - log out with a POST request
+- `/admin/` - Django administration
 
 ## Troubleshooting
 
-### Common Issues
+**Vertex AI says credentials are missing**
 
-1. **PostgreSQL connection errors:**
-   - Ensure PostgreSQL is running
-   - Check database credentials in `.env`
-   - For Docker: ensure `db` service is up
+Run `gcloud auth application-default login` again. With Docker Desktop on Windows, confirm that `%APPDATA%\gcloud\application_default_credentials.json` exists before starting Compose.
 
-2. **Static files not loading:**
-   - Run `docker-compose run --rm django python manage.py collectstatic`
-   - Check `STATIC_URL` and `STATIC_ROOT` settings
+**Vertex AI returns a permission or quota error**
 
-3. **Docker build errors:**
-   - Check Docker is running
-   - Verify Dockerfile syntax
-   - Try `docker system prune` to clean up
+Confirm billing is enabled, the Vertex AI API is enabled, the signed-in account can use Vertex AI, and the ADC quota project matches `GOOGLE_CLOUD_PROJECT`.
 
-### Getting Help
+**PostgreSQL cannot connect**
 
-- Check Django documentation: https://docs.djangoproject.com/
-- Review error logs in the console
-- Use Django's built-in error pages in development mode
+Make sure `.env` uses `DB_NAME=dietobot`, `DB_HOST=db`, and `DB_PORT=5432`. Port `5433` is only the host-machine mapping used by database tools outside Docker.
 
-## Customization
+**A database table is missing**
 
-This template is designed to be easily customizable:
+Apply migrations with `docker compose run --rm django python manage.py migrate` or `python manage.py migrate` for local SQLite.
 
-- **Project Name**: Update folder names, database names, and references
-- **Apps**: Add new Django apps as needed for your project
-- **Templates**: Modify the Bootstrap-based templates to match your design
-- **Settings**: Add environment-specific configurations
+**Static files are missing in production**
 
-## License
+Run `python manage.py collectstatic --noinput`. The production startup script already performs this step before Gunicorn starts.
 
-This Django base project template is provided for educational and development purposes. Feel free to use it as a starting point for your own Django projects.
+## Production
+
+The repository includes `Dockerfile`, `start.sh`, Gunicorn, WhiteNoise, and `config.settings.prod`. A production deployment must provide `DJANGO_SETTINGS_MODULE=config.settings.prod`, a strong `SECRET_KEY`, `ALLOWED_HOSTS`, a PostgreSQL `DATABASE_URL`, and Google Cloud credentials that Vertex AI can use. HTTPS is required by the production settings.

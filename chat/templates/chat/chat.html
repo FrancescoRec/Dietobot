@@ -4,26 +4,20 @@
 
 {% block content %}
 <section class="chat-page" aria-labelledby="chat-title">
-    <header class="page-heading">
-        <p class="eyebrow">DietoBot assistant</p>
-        <h1 id="chat-title">Chat</h1>
-        <p>Ask about your profile, nutrition, meals, or recipes.</p>
-    </header>
+    <h1 class="chat-title" id="chat-title">DIETOBOT</h1>
 
     <div class="chat-window">
-        {% if messages %}
-            {% for chat_message in messages %}
-                <div class="message {% if chat_message.role == 'user' %}message-user{% else %}message-bot{% endif %}">
-                    <strong>{% if chat_message.role == 'user' %}You{% else %}DietoBot{% endif %}</strong>
-                    <p>{{ chat_message.content }}</p>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="message message-bot">
-                <strong>DietoBot</strong>
-                <p>Hello {{ user.username }}. Tell me a little about yourself and what you want to work on with your nutrition.</p>
+        <div class="message message-bot">
+            <strong>DietoBot</strong>
+            <p>Hello {{ user.username }}. Tell me a little about yourself and what you want to work on with your nutrition.</p>
+        </div>
+
+        {% for chat_message in messages %}
+            <div class="message {% if chat_message.role == 'user' %}message-user{% else %}message-bot{% endif %}">
+                <strong>{% if chat_message.role == 'user' %}You{% else %}DietoBot{% endif %}</strong>
+                <p>{{ chat_message.content }}</p>
             </div>
-        {% endif %}
+        {% endfor %}
     </div>
 
     <form class="chat-form" method="post">

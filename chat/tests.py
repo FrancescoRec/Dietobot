@@ -38,5 +38,7 @@ class ChatViewTests(TestCase):
 
         response = self.client.get(reverse("dietobot-chat"))
 
+        self.assertContains(response, "DIETOBOT")
+        self.assertContains(response, "Hello mira.")
         self.assertContains(response, "Hello")
         self.assertContains(response, "Hi there!")
