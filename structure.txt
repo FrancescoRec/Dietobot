@@ -1,0 +1,37 @@
+dietobot/
+├── config/
+│   ├── settings/
+│   │   ├── base.py
+│   │   ├── local.py
+│   │   └── prod.py
+│   └── urls.py
+│
+├── core/
+│   ├── urls.py
+│   └── views.py
+│
+├── profiles/
+│   ├── migrations/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── urls.py
+│   ├── views.py
+│   └── tests.py
+│
+├── templates/
+│   ├── base.html
+│   ├── core/
+│   │   └── home.html
+│   ├── profiles/
+│   │   ├── profile.html
+│   │   └── profile_form.html
+│   └── registration/
+│       └── login.html
+│
+├── structure.txt
+├── manage.py
+├── requirements.txt
+├── Dockerfile
+└── docker-compose.yml
