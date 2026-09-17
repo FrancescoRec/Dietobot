@@ -128,9 +128,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATICFILES_DIRS = [d for d in [BASE_DIR / 'static'] if d.exists()]
 
 # Media files
 MEDIA_URL = '/media/'

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 MODEL_NAME = "gemini-2.5-flash"
 
-SYSTEM_PROMPT = """
+BASE_SYSTEM_PROMPT = """
 Extract the user's nutrition profile from their message.
 
 If the user says they want to become skinnier, lose fat, cut, slim down, or
@@ -18,6 +18,18 @@ goal to "gain". If they want to stay the same, set goal to "maintain".
 
 Only extract values the user explicitly states. Leave all other fields as null.
 """.strip()
+
+# Plain-language hints per field, appended to the prompt when we know
+# which field was just asked for. This lets Gemini interpret bare replies
+# like "180" or "80kg" correctly when the user is answering a specific question.
+CONTEXT_HINTS: dict[str, str] = {
+    "age":            "The user was just asked their age. A bare number is their age in years.",
+    "sex":            "The user was just asked their biological sex. A word like 'male', 'female', 'man', or 'woman' is their sex.",
+    "height_cm":      "The user was just asked their height. A bare number (e.g. 180) is their height in centimetres.",
+    "weight_kg":      "The user was just asked their weight. A bare number (e.g. 80) is their weight in kilograms.",
+    "activity_level": "The user was just asked their activity level. Map their description to: sedentary, light, moderate, or high.",
+    "goal":           "The user was just asked their weight goal. Map their answer to: lose, maintain, or gain.",
+}
 
 
 class ProfileExtraction(BaseModel):
@@ -37,15 +49,28 @@ class ProfileExtraction(BaseModel):
     weekly_budget: float | None = None
 
 
-def extract_profile(message: str) -> ProfileExtraction:
-    """Ask Gemini to turn a single message into structured profile data."""
+def extract_profile(
+    message: str,
+    context_field: str | None = None,
+) -> ProfileExtraction:
+    """Ask Gemini to turn a single message into structured profile data.
+
+    Args:
+        message:       The raw user message.
+        context_field: The field name we last asked for (e.g. "height_cm").
+                       When provided, appended to the prompt so Gemini can
+                       correctly interpret bare replies like "180".
+    """
+    prompt = BASE_SYSTEM_PROMPT
+    if context_field and context_field in CONTEXT_HINTS:
+        prompt += "\n\n" + CONTEXT_HINTS[context_field]
 
     model = ChatVertexAI(model=MODEL_NAME, temperature=0)
     structured_model = model.with_structured_output(ProfileExtraction)
 
     return structured_model.invoke(
         [
-            SystemMessage(content=SYSTEM_PROMPT),
+            SystemMessage(content=prompt),
             HumanMessage(content=message),
         ]
     )

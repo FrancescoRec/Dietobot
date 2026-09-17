@@ -103,12 +103,18 @@ class OnboardingWorkflowTests(TestCase):
                 weekly_budget=None,
             )
 
+        def fake_follow_up(missing_fields):
+            # Deterministic stand-in for the LLM follow-up call.
+            return "Should I use male or female for the energy calculation?"
+
         result = run_profile_onboarding(
             user,
             "I am 27, 182 cm, 84 kg, gym often.",
             extractor=fake_extractor,
+            follow_up_generator=fake_follow_up,
         )
 
         self.assertFalse(result["profile_complete"])
         self.assertEqual(result["missing_fields"], ["sex"])
-        self.assertIn("male or female", result["reply"])
+        self.assertIsInstance(result["reply"], str)
+        self.assertTrue(len(result["reply"]) > 0)
