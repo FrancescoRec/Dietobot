@@ -20,7 +20,9 @@ Write the next chat reply for a user who is building their basic nutrition
 profile. Keep it short, human, and conversational. If profile fields are
 missing, ask naturally for only what is needed next. Never show internal field
 names like height_cm, weight_kg, or activity_level. Do not use bullet lists.
-Do not give nutrition advice yet unless the profile is complete.
+Do not say "to get started" if the conversation has already started. Do not ask
+again for details already present in the workflow result. Do not give nutrition
+advice yet unless the profile is complete.
 """.strip()
 
 
@@ -28,6 +30,7 @@ class ProfileState(TypedDict, total=False):
     """Data passed from one workflow node to the next."""
 
     message: str
+    conversation: list[dict[str, str]]
     profile: ProfileExtraction
     result: dict[str, Any]
 
@@ -35,7 +38,7 @@ class ProfileState(TypedDict, total=False):
 def extract_node(state: ProfileState) -> dict[str, ProfileExtraction]:
     """Extract profile fields from the user's message."""
 
-    return {"profile": extract_profile(state["message"])}
+    return {"profile": extract_profile(state["message"], state.get("conversation"))}
 
 
 def validate_node(state: ProfileState) -> dict[str, dict[str, Any]]:
@@ -50,6 +53,7 @@ def reply_node(state: ProfileState) -> dict[str, dict[str, Any]]:
     model = ChatVertexAI(model=REPLY_MODEL_NAME, temperature=0.4)
     payload = {
         "user_message": state["message"],
+        "conversation": state.get("conversation", []),
         "workflow_result": state["result"],
     }
     response = model.invoke(
@@ -76,8 +80,16 @@ graph.add_edge("reply", END)
 profile_workflow = graph.compile()
 
 
-def run_profile_workflow(message: str) -> dict[str, Any]:
+def run_profile_workflow(
+    message: str,
+    conversation: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """Run the first profile step for one user message."""
 
-    final_state = profile_workflow.invoke({"message": message})
+    final_state = profile_workflow.invoke(
+        {
+            "message": message,
+            "conversation": conversation or [{"role": "user", "content": message}],
+        }
+    )
     return final_state["result"]

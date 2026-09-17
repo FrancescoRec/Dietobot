@@ -6,6 +6,15 @@ from ai.workflows.orchestrator import run_chat_workflow
 from .models import ChatMessage
 
 
+def conversation_for(user):
+    """Return this user's chat history in the shape the workflow expects."""
+
+    return [
+        {"role": message.role, "content": message.content}
+        for message in ChatMessage.objects.filter(user=user)
+    ]
+
+
 @login_required
 def chat(request):
     """Show the chat and process one message at a time."""
@@ -19,7 +28,10 @@ def chat(request):
                 role=ChatMessage.Role.USER,
                 content=message,
             )
-            reply = run_chat_workflow(message)["reply"]
+            reply = run_chat_workflow(
+                message,
+                conversation=conversation_for(request.user),
+            )["reply"]
             ChatMessage.objects.create(
                 user=request.user,
                 role=ChatMessage.Role.ASSISTANT,
